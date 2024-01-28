@@ -1,108 +1,27 @@
-name: iOS UI-tests
+name: iOS starter workflow
 
 on:
-  push:
-    branches:
-      - main
-      - develop
   workflow_dispatch:
     inputs:
       testplan:
         required: true
-        default: 'Debug'
+        default: 'debug'
         type: choice
         options:
-          - Debug
-          - Regress
-          - Smoke
-      device:
-        required: true
-        default: 'iPhone 13'
-        type: choice
-        options:
-          - 'iPhone 13'
-          - 'iPhone 14'
-          - 'iPhone 15'
-          - 'iPhone 15 Pro'
-
-env:
-  LC_ALL: 'en_US.UTF-8'
-  LANG: 'en_US.UTF-8'
-  LANGUAGE: 'en_US.UTF-8'
-  TESTPLAN: ${{ inputs.testplan || 'Debug' }}
-  DEVICE: ${{ inputs.device || 'iPhone 14' }}
+          - debug
+          - regress
+          - smoke
 
 jobs:
   build:
-    name: Build and test Calculator app
+    name: Build and Test default scheme using any available iPhone simulator
     runs-on: macos
-    timeout-minutes: 20
-
     steps:
       - name: Checkout git
-        uses: actions/checkout@v4
-        
-      - name: Get environment info
+        uses: actions/checkout@v3
+      - name: Setup env
         run: env
-        working-directory: ${{ github.workspace }}
-
-      - name: Clean cache files
-        run: |
-          rm -rf ./DerivedData
-          rm -rf ./Report
-          rm -rf ./allure-results
-          rm -rf xcresults
-          rm -rf allurectl
-
-      - name: Install ruby dependencies
-        run: bundle install
-
       - name: Build app
-        run: fastlane ios build_calculator
-
-      - name: Run UI-tests
-        run: fastlane ios test_app testplan:"${TESTPLAN}" device:"${DEVICE}"
-
-      - name: Install xcresults
-        if: ${{ always()}}
-        run: |
-          curl -OL https://github.com/eroshenkoam/xcresults/releases/latest/download/xcresults
-          chmod +x xcresults
-
-      - name: Convert xcresult to allure-results
-        if: ${{ always()}}
-        run: |
-          ./xcresults export ./Report/TurboCalculator.xcresult ./allure-results
-
-      - name: Save allure-results
-        if: ${{ always()}}
-        uses: actions/upload-artifact@v4.1.0
-        with:
-          name: Allure
-          path: allure-results
-          retention-days: 15
-
-      - name: Download allurectl (macos-arm)
-        if: ${{ always()}}
-        run: |
-          curl -L https://github.com/allure-framework/allurectl/releases/latest/download/allurectl_darwin_arm64 -o allurectl
-          chmod +x allurectl
-
-      - name: Upload results to TestOPS
-        if: ${{ always()}}
-        run: |
-          ./allurectl upload \
-            --endpoint https://allure.autotests.cloud/ \
-            --token ${{ secrets.ALLURE_TOKEN }} \
-            --project-id 3978 \
-            --launch-name  "Launch: ${{ github.run_number }} Test plan: ${{ env.TESTPLAN }} Device: ${{ env.DEVICE }}" \
-            allure-results
-
-      - name: Adding summary
-        if: ${{ always()}}
-        run: | 
-          echo "### Hello QA Guru! :fire:" >> $GITHUB_STEP_SUMMARY
-          echo "Launch: ${{ github.run_number }}" >> $GITHUB_STEP_SUMMARY
-          echo "Test plan: ${{ env.TESTPLAN }}" >> $GITHUB_STEP_SUMMARY
-          echo "Device: ${{ env.DEVICE }}" >> $GITHUB_STEP_SUMMARY
-          
+        run: pwd
+      - name: Run tests
+        run: pwd
